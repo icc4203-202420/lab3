@@ -1,34 +1,35 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, IconButton, Drawer, List, ListItem, ListItemText, ListItemIcon } from '@mui/material';
-import { Card, CardContent } from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemText, ListItemIcon } from '@mui/material';
+import useLocalStorageState from 'use-local-storage-state';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import SearchIcon from '@mui/icons-material/Search';
-import Weather from './components/Weather';
-
-function Home() {
-  return (
-    <Card sx={{ margin: 2, maxWidth: 600, mx: "auto" }}> {/* Estiliza la tarjeta según necesites */}
-      <CardContent>
-        <Typography variant="h5" component="div" gutterBottom>
-          Información del Clima
-        </Typography>
-        <Weather />
-      </CardContent>
-    </Card>
-  );
-}
-
-function Search() {
-  return <Typography variant="h6">Buscar</Typography>;
-}
+import Home from './components/Home';
+import Search from './components/Search';
 
 function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
+  };
+
+  const [favorites, setFavorites] = useLocalStorageState('WeatherApp/App/Favorites', {
+    defaultValue: ['Santiago de Chile']
+  });
+
+  const handleAddFavorite = (cityName) => {
+    if (!favorites.includes(cityName)) {
+      setFavorites([...favorites, cityName]);
+    }
+  };
+
+  let isFavorite = (location) => {
+    return favorites.some(favorite => favorite === location);
+  };
+
+  const handleRemoveFavorite = (cityName) => {
+    setFavorites(favorites.filter(favorite => favorite !== cityName));
   };
 
   return (
@@ -74,8 +75,8 @@ function App() {
       </Drawer>
       <Toolbar /> {/* This empty toolbar is necessary to offset the content below the AppBar */}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/search" element={<Search />} />
+        <Route path="/" element={<Home favorites={favorites} removeFavorite={handleRemoveFavorite} />} />
+        <Route path="/search" element={<Search isFavorite={isFavorite} onAddFavorite={handleAddFavorite} />} />
       </Routes>
     </>
   );
