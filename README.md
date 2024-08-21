@@ -317,11 +317,9 @@ En este componente hay dos hooks de React relevantes que son instanciados:
 
 ## Experimenta con el código
 
-1. Puedes partir usando mensajes `console.debug` en el componente `Weather` para desplegar en consola las respuestas que se obtienen al llamar a las APIs de geocoder y clima remotas.
-2. Luego, puedes modificar el request a geocoder y cambiar la ubicación geográfica, y verificar los resultados.
-3. Puedes personalizar el componente `Search` declarado en `App.jsx`. Incorpora un [campo de texto](https://mui.com/material-ui/react-text-field/) para búsqueda, agrega un hook de `useEffect` que vigile el campo de texto, y luego invoque a las APIs de geocoder y clima, y despliegue en la consola el resultado de clima de acuerdo con la ubicación geográfica tipeada en el campo de texto.
-4. Puedes hacer _refactoring_ del código, y mover la función `fetchWeather` fuera del hook, de manera que pueda ser compartida por los componentes `Home` y `Search`. Puedes modificar esta función para que reciba como parámetro un string con el nombre de la ubicación geográfica que se desea consultar.
-5. Puedes ajustar los estilos utilizados en la aplicación variando colores en `src/theme.js`.
+1. En el componente `Search` puedes agregar un botón para limpiar el historial de búsqueda, el cual aparezca desplegado únicamente si hay contenido en la lista de resultados guardada en local storage.
+2. 
+
 
 ## Anexo: Lo básico de Vite
 

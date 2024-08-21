@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useReducer, useState } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemText, ListItemIcon } from '@mui/material';
 import useLocalStorageState from 'use-local-storage-state';
@@ -8,28 +8,51 @@ import SearchIcon from '@mui/icons-material/Search';
 import Home from './components/Home';
 import Search from './components/Search';
 
+// Definir el reducer para manejar la lista de favoritos
+const favoritesReducer = (state, action) => {
+  switch (action.type) {
+    case 'ADD_FAVORITE':
+      if (!state.includes(action.payload)) {
+        return [...state, action.payload];
+      }
+      return state;
+    case 'REMOVE_FAVORITE':
+      return state.filter(favorite => favorite !== action.payload);
+    default:
+      return state;
+  }
+};
+
 function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
 
-  const [favorites, setFavorites] = useLocalStorageState('WeatherApp/App/Favorites', {
+  // Usar useLocalStorageState para inicializar el estado de favoritos
+  const [initialFavorites] = useLocalStorageState('WeatherApp/App/Favorites', {
     defaultValue: ['Santiago de Chile']
   });
 
-  const handleAddFavorite = (cityName) => {
-    if (!favorites.includes(cityName)) {
-      setFavorites([...favorites, cityName]);
-    }
-  };
+  // Usar useReducer para manejar el estado de favoritos
+  const [favorites, dispatch] = useReducer(favoritesReducer, initialFavorites);
 
-  let isFavorite = (location) => {
-    return favorites.some(favorite => favorite === location);
+  // Guardar los cambios en favoritos en localStorage
+  const [, setFavoritesInLocalStorage] = useLocalStorageState('WeatherApp/App/Favorites');
+  React.useEffect(() => {
+    setFavoritesInLocalStorage(favorites);
+  }, [favorites, setFavoritesInLocalStorage]);
+
+  const handleAddFavorite = (cityName) => {
+    dispatch({ type: 'ADD_FAVORITE', payload: cityName });
   };
 
   const handleRemoveFavorite = (cityName) => {
-    setFavorites(favorites.filter(favorite => favorite !== cityName));
+    dispatch({ type: 'REMOVE_FAVORITE', payload: cityName });
+  };
+
+  const isFavorite = (location) => {
+    return favorites.some(favorite => favorite === location);
   };
 
   return (
