@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React Contador</title>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React and ReactDOM from CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+  <!-- Babel for JSX support in the browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function Contador() {
+      const [contador, setContador] = useState(0);
+
+      // Hook useEffect para actualizar el título del documento
+      useEffect(() => {
+        document.title = `Has hecho clic ${contador} veces`;
+      }, [contador]); // Solo vuelve a ejecutarse si cambia "contador"
+
+      return (
+        <div>
+          <p>Has hecho clic {contador} veces</p>
+          <button onClick={() => setContador(contador + 1)}>
+            Haz clic
+          </button>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<Contador />);
+  </script>
+</body>
+</html>

@@ -31,7 +31,7 @@ function App() {
 
   // Usar useLocalStorageState para inicializar el estado de favoritos
   const [initialFavorites] = useLocalStorageState('WeatherApp/App/Favorites', {
-    defaultValue: ['Santiago de Chile']
+    defaultValue: ['Arica']
   });
 
   // Usar useReducer para manejar el estado de favoritos

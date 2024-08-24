@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React Contador con Local Storage</title>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React and ReactDOM from CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+  <!-- Babel for JSX support in the browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- use-local-storage-state from CDN -->
+  <script src="https://unpkg.com/use-local-storage-state@13.0.0/dist/index.umd.js" crossorigin></script>
+
+  <script type="text/babel">
+    const { useLocalStorageState } = window['use-local-storage-state'];
+
+    function ContadorConLocalStorage() {
+      const [contador, setContador] = useLocalStorageState('/examples/example4/contador', 0);
+
+      return (
+        <div>
+          <p>Contador: {contador}</p>
+          <button onClick={() => setContador(contador + 1)}>
+            Incrementar
+          </button>
+          <button onClick={() => setContador(0)}>
+            Reiniciar
+          </button>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<ContadorConLocalStorage />);
+  </script>
+</body>
+</html>

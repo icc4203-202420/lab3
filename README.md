@@ -38,6 +38,8 @@ El hook `useState` permite agregar estado a un componente funcional en React. Cu
 
 Ejemplo:
 
+```markdown
+### /examples/example1.html
 ```es6
 import React, { useState } from 'react';
 
@@ -64,6 +66,8 @@ En este ejemplo, `useState(0)` inicializa el estado contador con un valor de 0. 
 
 El hook `useEffect` se utiliza para manejar efectos secundarios en los componentes de React. Esto incluye tareas como la recuperación de datos, la suscripción a servicios, o la manipulación directa del DOM. `useEffect` se ejecuta después de que el componente se haya renderizado y, por defecto, lo hace después de cada actualización. Sin embargo, también puede configurarse para ejecutarse solo cuando cambian ciertos valores.
 
+```markdown
+### /examples/example2.html
 ```es6
 import React, { useState, useEffect } from 'react';
 
@@ -94,6 +98,8 @@ En este caso, el hook `useEffect` se utiliza para actualizar el título de la p�
 
 React 18 incluye un hook nativo llamado `useReducer` que permite manejar el estado de un componente de manera más compleja que `useState`. Este hook es ideal cuando el estado de un componente depende de múltiples acciones o cuando el estado es un objeto que requiere cambios basados en una lógica más estructurada por casos. Ejemplo de uso:
 
+```markdown
+### /examples/example3.html
 ```es6
 import React, { useReducer } from 'react';
 
@@ -186,12 +192,14 @@ yarn add use-local-storage-state
 
 Ejemplo de uso:
 
+```markdown
+### /examples/example4.html
 ```es6
 import React from 'react';
 import useLocalStorageState from 'use-local-storage-state';
 
 function ContadorConLocalStorage() {
-  const [contador, setContador] = useLocalStorageState('contador', 0);
+  const [contador, setContador] = useLocalStorageState('/examples/example4/contador', 0);
 
   return (
     <div>
@@ -296,30 +304,110 @@ Finalmente `React.StrictMode` permite comunicar advertencias o errores al desarr
 
 **Componente App**
 
-El archivo `App.jsx` declara el componente principal de la aplicación `App`, junto con componentes que se instancian cuando se está en la ruta raíz `/` (`Home`) y en la ruta `/search` (`Search`). 
+El archivo `App.jsx` declara el componente principal de la aplicación `App`. A este componente se ha incorporado el uso de _local storage_ para mantener la lista de ubicaciones favoritas del usuario para acceder a información climática. Esto quiere decir que el usuario puede cerrar la ventana (o pestaña del navegador), y la información sobre sus ciudades favoritas se mantendrá persistentemente en el almacenamiento local del navegador.
 
-El componente `App` maneja una única variable de estado con el hook de _state_, que permite alternar la vista del menú de navegación, haciendo click en el botón que se encuentra en la barra superior (ver `AppBar` y uso de la variable de estado `toggleDrawer`).
+Para lo anterior, se usa el hook `useLocalStorageState` antes descrito. Para usar _local storage_ con este hook, se opta por definir namespaces jerarquizados; el primer namespace es el que tiene el nombre de la aplicación, `WeatherApp`, y bajo este namespace los componentes de la aplicación pueden definir sus propios namespaces para mantener variables en _local storage_:
 
-El menú de navegación está construido con un componente tipo `List` de React que permite que los ítemes queden enlazados a otros componentes; `Home` y `Search`.
+```es6
+const [initialFavorites] = useLocalStorageState('WeatherApp/App/Favorites', {
+    defaultValue: ['Arica']
+  });
+```
 
-En las líneas finales de `App.jsx` se encuentra el componente `Routes` que en forma análoga a `routes.rb` en el backend de la aplicación Rails, define una lista de rutas que son válidas para la aplicación que se ejecuta en el _frontend_.
+El componente `App` es "dueño" de la lista de favoritos, la cual es utilizada tanto por los componentes `Search` como `Home`. Es decir ninguno de estos últimos componentes, como veremos más adelante, modifica directamente la lista de favoritos. Esto lo hace `App` a través de funciones de callback, y uso de una función reductora.
+
+Todas las actualizaciones a la lista de favorito, como agregar favorito y quitar favorito, se realizan a través de la función reductora llamada `favoritesReducer`. Esta función es utilizada por el hook `useReducer` de `App`. Se pueden ver usos de la función despachadora `dispatch` definida por este hook en los manejadores de callback `handleAddFavorite` y `handleRemoveFavorite`.
+
+El patrón reducer centraliza todas las operaciones de actualización de variables de estado, y obliga al desarrollador a definir y anticipar todos los estados posibles en el ciclo de vida de las variables. Esto permite desarrollar código más robusto y menos propenso a sufrir bugs por mal manejo de estado, lo cual es común si solamente se usa el hook `useState` para mantener el estado de todas las variables en los componentes.
 
 **Componente Home**
 
-El componente `Home` incluye algunos componentes de MUI, como el de [`Card`](https://mui.com/material-ui/react-card/) y `CardContent`. Sin embargo, el propósito de `Card` es proveer un área en la cual instanciar el componente `Weather` que realiza las acciones relevantes en nuestra aplicación.
+El componente `Home` ha sido ampliado para mostrar una lista de pestañas (tabs), mediante los cuales es posible ver la información climática de acuerdo al estado de la lista de ubicaciones favoritas.
+
+Notar que el componente `Home` recibe a través de _props_ la lista de favoritos, y la función para eliminar una ubicación favorita.
+
+Es importante mencionar que se ha incorporado un módulo llamado `prop-types` al proyecto, el cual permite validar que las propiedades pasadas vía _props_ al componente sean del debido tipo. Esto aparece al final del archivo del componente `Home`:
+
+```es6
+Home.propTypes = {
+  favorites: PropTypes.arrayOf(PropTypes.string).isRequired,
+  removeFavorite: PropTypes.func.isRequired,
+};
+```
+
+En cada pestaña de MUI desplegada por el componente `Home` se instancia el componente `Weather` de acuerdo a la pestaña escogida.
 
 **Componente Weather**
 
-En este componente hay dos hooks de React relevantes que son instanciados:
+El componente Weather realiza llamadas a las APIs de OpenWeatherMap.
 
-* `state` (variable `weather`): Esta variable contiene el objeto actual de clima cargado mediante la API de OpenWeather.
-* `effect`: Este hook que no recibe ningún objeto para vigilar en su arreglo de argumentos, y ejecuta _automáticamente y una sola vez cuando se termina de renderizar_ el componente `Weather`. La función asíncrona que ejecuta el hook es `fetchWeather`. Podemos ver en ella las llamadas a la API remota y el procesamiento de resultados.
+Dado que la consulta del clima requiere dos pasos; primero obtener las coordenadas de la ubicación a través de la API de Geocoder, y luego consultar a la API de clima utilizando coordenadas geodésicas. La función `fetchWeather`, definida asíncrona, ejecuta las llamadas a la API en forma secuencial, cuando el componente es montado (se ejecuta en `useEffect`).
+
+La función tiene cierta complejidad debido a que las llamadas a la API de OpenWeatherMap son asíncronas y pueden ocurrir ciertas condiciones de carrera. La explicación detallada es la siguiente:
+
+En un componente React, si haces una llamada asíncrona (por ejemplo, usando axios para obtener datos) dentro de un `useEffect`, y esa llamada aún no ha terminado cuando el componente se desmonta, podría haber un intento de actualizar el estado (`setWeather`, `setLoading`, `setError`) en un componente que ya no está montado. Esto puede llevar a errores y advertencias, como _"Can't perform a React state update on an unmounted component"_.
+
+La variable _isMounted_ actúa como una bandera (flag) para indicar si el componente sigue montado o no. Se inicializa como true cuando el useEffect se ejecuta por primera vez, y luego se cambia a `false` en la función de limpieza (cleanup function) del `useEffect`, que se ejecuta cuando el componente se desmonta o cuando alguna de las dependencias del `useEffect` cambia.
+
+El flujo del código con `isMounted` es el siguiente:
+
+1. `isMounted` se inicializa como true cuando el `useEffect` se ejecuta por primera vez, lo que indica que el componente está montado.
+2. Dentro de la función asíncrona `fetchWeather`, se realizan varias operaciones que incluyen esperar respuestas de la API. Durante este tiempo, el componente podría potencialmente desmontarse, por ejemplo, si el usuario navega a otro componente o si cambian las dependencias del `useEffect`.
+3. Antes de actualizar el estado (`setWeather`, `setLoading`, `setError`), se verifica si `isMounted` sigue siendo `true`. Si lo es, significa que el componente todavía está montado, y es seguro realizar la actualización del estado. Si no lo está (`isMounted` es `false`), la función simplemente retorna y no se realiza ninguna actualización del estado.
+4. Cuando el componente se desmonta o se vuelve a ejecutar el `useEffect` debido a un cambio en las dependencias (en este caso, location o apiKey), se ejecuta la función de limpieza (`return () => { isMounted = false; }`). Esto asegura que cualquier intento de actualizar el estado después de este punto será ignorado, porque isMounted será false.
+
+**Componente Search**
+
+El componente `Search` recibe vía _props_ la lista de ubicaciones favoritas, y la función de callback `onAddFavorite`, para ofrecer al usuario la posibilidad de agregar un resultado de búsqueda a la lista de ubicaciones favoritas alojada en el componente padre.
+
+Por otro lado, el componente `Search` mantiene en _local storage_ una lista con las ubicaciones recientemente buscadas:
+
+```es6
+  const [keywordList, setKeywordList] = useLocalStorageState('WeatherApp/Search/KeywordList', {
+    defaultValue: []
+  });
+```
+
+Hay un hook de `useEffect` que se encarga de poblar la lista de ubicaciones recientemente buscadas, cuidando de no duplicar ubicaciones.
+
+Para facilitar la búsqueda de ciudades, el componente rendeeriza el campo de texto para búsquedas embebido dentro de un componente de tipo `Autocomplete`. Este componente obtiene las ubicaciones recientemente buscadas en `keywordList`, variable asociada al hook `useLocalStorageState`.
 
 ## Experimenta con el código
 
-1. En el componente `Search` puedes agregar un botón para limpiar el historial de búsqueda, el cual aparezca desplegado únicamente si hay contenido en la lista de resultados guardada en local storage.
-2. 
+1. Agrega el despliegue de la fecha y hora actual al componente `Weather`.
+2. En el componente `Search` puedes agregar un botón para limpiar el historial de búsqueda, el cual aparezca desplegado únicamente si hay contenido en la lista de resultados guardada en local storage.
+3. Puedes ampliar el despliegue de información climática en el componente `Weather` para mostrar una descripción textual del estado actual del clima. Para esto, puedes acceder al objeto `weather` en `weatherResponse`, el cual tiene la forma:
+```es6
+"weather":[{"id":804,"main":"Clouds","description":"overcast clouds","icon":"04d"}]
+```
+4. El componente `Weather` contiene tres variables de estado (`weather`, `loading`, y `error`) que se actualizan en distintos lugares del código. Intenta hacer refactoring de este código para usar una función reductora (hook `useReducer`) para actualizar el estado de estas variables. La función reductora podría ser algo del estilo:
 
+```es6
+function reducer(state, action) {
+  switch (action.type) {
+    case 'FETCH_INIT':
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+    case 'FETCH_SUCCESS':
+      return {
+        ...state,
+        loading: false,
+        weather: action.payload,
+      };
+    case 'FETCH_FAILURE':
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
+    default:
+      throw new Error(`Unhandled action type: ${action.type}`);
+  }
+}
+```
 
 ## Anexo: Lo básico de Vite
 
