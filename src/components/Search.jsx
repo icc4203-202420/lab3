@@ -26,12 +26,6 @@ const Search = ({ isFavorite, onAddFavorite }) => {
     { manual: true } // Esto evita que se ejecute automáticamente al cargar el componente
   );
 
-  // Efecto para guardar la nueva búsqueda en el localStorage
-  useEffect(() => {
-    if (searchData && !keywordList.includes(searchKeywords)) {
-      setKeywordList([...keywordList, searchKeywords]);
-    }
-  }, [keywordList, searchData, searchKeywords, setKeywordList]);
 
   // Función para manejar el cambio en el campo de texto
   const handleInputChange = (event, newInputValue) => {
@@ -40,10 +34,19 @@ const Search = ({ isFavorite, onAddFavorite }) => {
 
   // Función para manejar la búsqueda
   const handleSearch = () => {
+
     if (searchKeywords) {
       refetch();
     }
+
+    if (searchKeywords.trim() && !keywordList.includes(searchKeywords.trim())) {
+      setKeywordList([...keywordList, searchKeywords.trim()]);
+    }
   };
+
+  const handleClearHistory = () => {
+    setKeywordList([]);
+  }
 
   return (
     <div>
@@ -62,6 +65,11 @@ const Search = ({ isFavorite, onAddFavorite }) => {
       <Button variant="contained" color="primary" onClick={handleSearch}>
         Buscar
       </Button>
+      { keywordList.length > 0 && (
+        <Button variant="outlined" color="secondary" onClick={handleClearHistory} style={{ marginLeft: '10px' }}>
+          Limpiar Historial
+        </Button>
+      )}
 
       {loading && (
         <Typography variant="body1" margin="normal">
