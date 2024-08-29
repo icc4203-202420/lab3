@@ -1,9 +1,10 @@
-import { useState, useEffect, useReducer } from 'react';
+import { useEffect, useReducer } from 'react';
 import axios from 'axios';
 import { Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const Weather = ({ location }) => {
+ 
   const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
   // Estado inicial para el reducer
@@ -41,7 +42,6 @@ const Weather = ({ location }) => {
   }
   
 
-  // Hook useReducer
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
@@ -80,11 +80,17 @@ const Weather = ({ location }) => {
         });
 
         if (isMounted) {
-          const { dt, timezone } = weatherResponse.data;
+          const { timezone } = weatherResponse.data;
           
-          // Calcular la hora local y configurar un intervalo para actualizarla cada segundo
           const updateDateTime = () => {
-            const currentDateTime = new Date((dt + timezone) * 1000 + Date.now() - dt * 1000);
+            /*  Date.now() entrega la hora del computador, necesitamos la del meridiano de greenwich y
+                a partir de ahí sumarle la zona horaria extraida de la API
+
+                toGMTString() convierte la hora Greenwich Mean Time
+            */
+            const timezoneOffset = timezone * 1000; // Convertir de segundos a milisegundos
+            const currentDateTime = new Date(Date.now() + timezoneOffset).toGMTString();
+            
             dispatch({ 
               type: 'FETCH_SUCCESS', 
               payload: { 
@@ -99,9 +105,10 @@ const Weather = ({ location }) => {
             });
           };
 
-          updateDateTime(); // Actualiza inmediatamente
-          const intervalId = setInterval(updateDateTime, 1000); // Actualiza cada segundo
-
+          const intervalId = setInterval(updateDateTime, 1000); 
+          /*    setInterval es una funcion que recibe 2 parametros, el primero es la función a ejecutar,
+                y el segundo es el tiempo en milisegundos en el que la función se va a ir llamando.
+          */
           return () => clearInterval(intervalId); // Limpia el intervalo cuando el componente se desmonta
         }
       } catch (err) {

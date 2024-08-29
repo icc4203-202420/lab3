@@ -39,8 +39,8 @@ const Search = ({ isFavorite, onAddFavorite }) => {
       refetch();
     }
 
-    if (searchKeywords.trim() && !keywordList.includes(searchKeywords.trim())) {
-      setKeywordList([...keywordList, searchKeywords.trim()]);
+    if (searchKeywords.trim() && !keywordList.includes(searchKeywords)) {
+      setKeywordList([...keywordList, searchKeywords]);
     }
   };
 
